@@ -1,0 +1,36 @@
+PROGRAM → DEVICES CMDS
+
+DEVICES → DEVICE DEVICES 
+        | DEVICE
+
+DEVICE → dispositivo : {namedevice}
+       | dispositivo : {namedevice, observation}
+
+DEVICE_LIST → namedevice, DEVICE_LIST
+      | namedevice
+
+CMDS → CMD. CMDS 
+      | CMD.
+
+CMD → ATTRIB 
+     | OBSACT
+     | ACT
+
+ATTRIB → set observation = VAR
+
+OBSACT → se OBS entao ACT
+        | se OBS entao ACT senao ACT
+
+OBS → observation oplogic VAR
+     | observation oplogic VAR && OBS
+
+VAR → num
+     | bool
+
+ACT → ACTION namedevice
+     | enviar alerta (msg) namedevice
+     | enviar alerta (msg, observation) namedevice
+     | enviar alerta (msg) para todos : DEVICE_LIST
+
+ACTION → ligar
+        | desligar
