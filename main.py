@@ -421,6 +421,231 @@ class DeviceParser(Parser):
 
 
 # ============================================================================
+# Code Generator
+# ============================================================================
+
+class CodeGenerator:
+    """Generates Python code from ObsAct AST"""
+
+    def __init__(self):
+        self.output_lines = []
+        self.indent_level = 0
+        self.devices = set()  # Track declared devices
+        self.variables = set()  # Track declared variables
+
+    def generate(self, ast: Program) -> str:
+        """Generate Python code from AST"""
+        self.output_lines = []
+        self.indent_level = 0
+        self.devices = set()
+        self.variables = set()
+
+        # Add header comment and imports
+        self.add_line("# Generated Python code from ObsAct program")
+        self.add_line("# Generated using SLY-based parser and code generator")
+        self.add_line("")
+        self.add_line("# Import device control functions")
+        self.add_line("from functions import ligar, desligar, alerta, alertavar")
+        self.add_line("")
+
+        # Collect device information
+        for device in ast.devices:
+            self.devices.add(device.name)
+            if device.observation:
+                self.variables.add(device.observation)
+
+        # Generate main program logic
+        self.add_line("# Main program logic")
+        self.add_line("def main():")
+        self.indent_level += 1
+
+        # Initialize variables from device observations
+        self.generate_variable_initializations(ast.devices)
+
+        # Generate commands
+        for command in ast.commands:
+            self.generate_command(command)
+
+        self.indent_level -= 1
+        self.add_line("")
+        self.add_line("if __name__ == '__main__':")
+        self.add_line("    main()")
+
+        return "\n".join(self.output_lines)
+
+    def add_line(self, line: str = ""):
+        """Add a line with proper indentation"""
+        if line.strip():
+            self.output_lines.append("    " * self.indent_level + line)
+        else:
+            self.output_lines.append("")
+
+
+
+    def generate_variable_initializations(self, devices: List[Device]):
+        """Generate variable initializations for device observations"""
+        for device in devices:
+            if device.observation:
+                self.variables.add(device.observation)
+                self.add_line(f"# Variable for device {device.name} observation")
+                self.add_line(f"{device.observation} = None  # Will be set by program")
+
+        if any(device.observation for device in devices):
+            self.add_line("")
+
+    def generate_command(self, command: Command):
+        """Generate code for a command"""
+        if isinstance(command, Attribution):
+            self.generate_attribution(command)
+        elif isinstance(command, ObservationAction):
+            self.generate_observation_action(command)
+        elif isinstance(command, SimpleAction):
+            self.generate_simple_action(command)
+        elif isinstance(command, AlertAction):
+            self.generate_alert_action(command)
+        elif isinstance(command, BroadcastAlertAction):
+            self.generate_broadcast_alert_action(command)
+        else:
+            self.add_line(f"# Unknown command type: {type(command)}")
+
+    def generate_attribution(self, attr: Attribution):
+        """Generate code for attribution (set command)"""
+        original_comment = f"# set {attr.observation} = {attr.value}"
+        self.add_line(original_comment)
+        self.add_line(f"{attr.observation} = {repr(attr.value)}")
+        self.add_line("")
+
+    def generate_observation_action(self, obs_act: ObservationAction):
+        """Generate code for conditional statements"""
+        # Generate condition
+        condition_str = self.generate_observation_condition(obs_act.condition)
+        original_comment = f"# se {condition_str} entao ..."
+
+        self.add_line(original_comment)
+        self.add_line(f"if {condition_str}:")
+        self.indent_level += 1
+
+        # Generate then action
+        self.generate_action(obs_act.then_action)
+
+        self.indent_level -= 1
+
+        # Generate else action if present
+        if obs_act.else_action:
+            self.add_line("else:")
+            self.indent_level += 1
+            self.generate_action(obs_act.else_action)
+            self.indent_level -= 1
+
+        self.add_line("")
+
+    def generate_observation_condition(self, obs: Observation) -> str:
+        """Generate Python condition from observation"""
+        condition = f"{obs.observation} {obs.operator} {repr(obs.value)}"
+
+        if obs.next_obs:
+            next_condition = self.generate_observation_condition(obs.next_obs)
+            condition += f" and {next_condition}"
+
+        return condition
+
+    def generate_action(self, action: Action):
+        """Generate code for an action"""
+        if isinstance(action, SimpleAction):
+            self.generate_simple_action(action)
+        elif isinstance(action, AlertAction):
+            self.generate_alert_action(action)
+        elif isinstance(action, BroadcastAlertAction):
+            self.generate_broadcast_alert_action(action)
+        else:
+            self.add_line(f"# Unknown action type: {type(action)}")
+
+    def generate_simple_action(self, action: SimpleAction):
+        """Generate code for simple actions (ligar/desligar)"""
+        original_comment = f"# {action.action_type} {action.device}"
+        self.add_line(original_comment)
+        self.add_line(f'{action.action_type}("{action.device}")')
+
+    def generate_alert_action(self, action: AlertAction):
+        """Generate code for alert actions"""
+        if action.observation:
+            original_comment = f'# enviar alerta ("{action.message}", {action.observation}) {action.device}'
+            self.add_line(original_comment)
+            self.add_line(f'alertavar("{action.device}", "{action.message}", str({action.observation}))')
+        else:
+            original_comment = f'# enviar alerta ("{action.message}") {action.device}'
+            self.add_line(original_comment)
+            self.add_line(f'alerta("{action.device}", "{action.message}")')
+
+    def generate_broadcast_alert_action(self, action: BroadcastAlertAction):
+        """Generate code for broadcast alert actions"""
+        original_comment = f'# enviar alerta ("{action.message}") para todos : {", ".join(action.devices)}'
+        self.add_line(original_comment)
+        self.add_line("# Broadcast alert to multiple devices")
+        for device in action.devices:
+            self.add_line(f'alerta("{device}", "{action.message}")')
+
+
+class ObsActCompiler:
+    """Main compiler class that handles .obs to .py conversion"""
+
+    def __init__(self):
+        self.processor = DeviceLanguageProcessor()
+        self.code_generator = CodeGenerator()
+
+    def compile_file(self, obs_file_path: str, py_file_path: str = None) -> bool:
+        """Compile .obs file to .py file"""
+        try:
+            # Determine output file path
+            if py_file_path is None:
+                if obs_file_path.endswith('.obs'):
+                    py_file_path = obs_file_path[:-4] + '.py'
+                else:
+                    py_file_path = obs_file_path + '.py'
+
+            # Read input file
+            with open(obs_file_path, 'r', encoding='utf-8') as f:
+                obs_code = f.read()
+
+            print(f"Reading ObsAct program from: {obs_file_path}")
+
+            # Parse the ObsAct code
+            result = self.processor.analyze(obs_code, show_tokens=False, show_ast=False)
+
+            if not result['success']:
+                print("Compilation failed due to syntax errors:")
+                for error in result['errors']:
+                    print(f"  {error}")
+                return False
+
+            # Generate Python code
+            python_code = self.code_generator.generate(result['ast'])
+
+            # Write output file
+            with open(py_file_path, 'w', encoding='utf-8') as f:
+                f.write(python_code)
+
+            print(f"Successfully generated Python code: {py_file_path}")
+            return True
+
+        except FileNotFoundError:
+            print(f"Error: File '{obs_file_path}' not found")
+            return False
+        except Exception as e:
+            print(f"Error during compilation: {str(e)}")
+            return False
+
+    def compile_string(self, obs_code: str) -> str:
+        """Compile ObsAct code string to Python code string"""
+        result = self.processor.analyze(obs_code, show_tokens=False, show_ast=False)
+
+        if not result['success']:
+            raise Exception(f"Compilation failed: {result['errors']}")
+
+        return self.code_generator.generate(result['ast'])
+
+
+# ============================================================================
 # Unified Interface for SLY Parser
 # ============================================================================
 
@@ -494,59 +719,123 @@ class DeviceLanguageProcessor:
 
 
 # ============================================================================
-# Example Usage and Testing
+# Command Line Interface and Examples
 # ============================================================================
 
+def main():
+    """Main function with command line interface"""
+    import sys
+    import os
+
+    if len(sys.argv) > 1:
+        # Command line mode - compile .obs file
+        obs_file = sys.argv[1]
+
+        if not os.path.exists(obs_file):
+            print(f"Error: File '{obs_file}' not found")
+            sys.exit(1)
+
+        # Optional output file
+        py_file = sys.argv[2] if len(sys.argv) > 2 else None
+
+        compiler = ObsActCompiler()
+        success = compiler.compile_file(obs_file, py_file)
+
+        if success:
+            print("Compilation completed successfully!")
+            sys.exit(0)
+        else:
+            print("Compilation failed!")
+            sys.exit(1)
+
+    else:
+        # Demo mode - show examples
+        demo_parser_and_generator()
+
+
+def demo_parser_and_generator():
+    """Demonstrate both parser and code generator"""
+    compiler = ObsActCompiler()
+
+    print("=" * 70)
+    print("DEMONSTRAÇÃO DO PARSER E GERADOR DE CÓDIGO SLY")
+    print("=" * 70)
+
+    # Example 1: Simple program
+    print("\n1. PROGRAMA SIMPLES")
+    print("-" * 50)
+
+    codigo_exemplo1 = '''dispositivo : sensor1, temp
+dispositivo : led1
+
+set temp = 25.
+se temp > 30 entao ligar led1.
+enviar alerta ("Sistema iniciado") sensor1.'''
+
+    print("Código ObsAct:")
+    print(codigo_exemplo1)
+    print("\nCódigo Python gerado:")
+    try:
+        python_code1 = compiler.compile_string(codigo_exemplo1)
+        print(python_code1)
+    except Exception as e:
+        print(f"Erro: {e}")
+
+    # Example 2: Complex program with conditionals
+    print("\n" + "=" * 70)
+    print("2. PROGRAMA COMPLEXO COM CONDICIONAIS")
+    print("-" * 50)
+
+    codigo_exemplo2 = '''dispositivo : tempSensor, temperature
+dispositivo : humSensor, humidity
+dispositivo : redLED
+dispositivo : greenLED
+dispositivo : buzzer
+
+set temperature = 22.
+set humidity = 45.
+
+se temperature > 35 entao enviar alerta ("Temperatura crítica", temperature) para todos : redLED, buzzer.
+se temperature >= 25 && temperature <= 35 entao ligar redLED senao desligar redLED.
+se humidity < 30 entao enviar alerta ("Umidade baixa") humSensor.'''
+
+    print("Código ObsAct:")
+    print(codigo_exemplo2)
+    print("\nCódigo Python gerado:")
+    try:
+        python_code2 = compiler.compile_string(codigo_exemplo2)
+        print(python_code2)
+    except Exception as e:
+        print(f"Erro: {e}")
+
+    # Example 3: Error handling
+    print("\n" + "=" * 70)
+    print("3. TRATAMENTO DE ERROS")
+    print("-" * 50)
+
+    codigo_exemplo3 = '''dispositivo : sensor1
+set temp = 25
+se temp > 30 entao ligar led1.'''
+
+    print("Código ObsAct com erro (falta ponto):")
+    print(codigo_exemplo3)
+    print("\nResultado:")
+    try:
+        python_code3 = compiler.compile_string(codigo_exemplo3)
+        print(python_code3)
+    except Exception as e:
+        print(f"Erro de compilação: {e}")
+
+    print("\n" + "=" * 70)
+    print("INSTRUÇÕES DE USO")
+    print("=" * 70)
+    print("Para compilar um arquivo .obs:")
+    print("  python main.py arquivo.obs [arquivo_saida.py]")
+    print("")
+    print("Exemplo:")
+    print("  python main.py programa.obs")
+    print("  python main.py programa.obs meu_programa.py")
+
+
 if __name__ == "__main__":
-    processor = DeviceLanguageProcessor()
-
-    # Example 1: Valid program
-    print("=" * 60)
-    print("EXEMPLO 1: Programa válido")
-    print("=" * 60)
-
-    codigo_exemplo1 = '''
-    dispositivo : sensorTemp
-    dispositivo : ledVermelho, temperatura2
-
-    set temperatura2 = 25.
-
-    se temperatura2 > 30 entao ligar ledVermelho.
-    se temperatura2 < 10 && temperatura2 > 0 entao enviar alerta ("Temperatura baixa") sensorTemp.
-    '''
-
-    result1 = processor.analyze(codigo_exemplo1, show_tokens=True, show_ast=True)
-
-    # Example 2: Program with syntax error
-    print("\n" + "=" * 60)
-    print("EXEMPLO 2: Programa com erro sintático")
-    print("=" * 60)
-
-    codigo_exemplo2 = '''
-    dispositivo : sensor1
-
-    set temperatura = 25
-    se temperatura > 30 entao ligar led.
-    '''
-
-    result2 = processor.analyze(codigo_exemplo2, show_tokens=False, show_ast=True)
-
-    # Example 3: Complex valid program
-    print("\n" + "=" * 60)
-    print("EXEMPLO 3: Programa complexo válido")
-    print("=" * 60)
-
-    codigo_exemplo3 = '''
-    dispositivo : sensor1, temp
-    dispositivo : led1
-    dispositivo : led2
-    dispositivo : buzzer
-
-    set temp = 20.
-
-    se temp > 25 && temp < 35 entao ligar led1.
-    se temp >= 35 entao enviar alerta ("Temperatura alta", temp) para todos : led1, led2, buzzer.
-    se temp < 10 entao desligar led1 senao ligar led2.
-    '''
-
-    result3 = processor.analyze(codigo_exemplo3, show_tokens=False, show_ast=True)
+    main()

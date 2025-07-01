@@ -1,3 +1,6 @@
 venv/
 __pycache__/
 parser.out
+exemplo.py
+exemplo.obs
+teste_completo.obs
