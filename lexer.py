@@ -83,7 +83,7 @@ class DeviceLexer(Lexer):
             t.type = t.value.upper()
         return t
 
-    # Comments - ignore everything from // to end of line
+    # Comentários - ignora tudo de // até o final da linha
     ignore_comment = r'//.*'
 
     ignore_newline = r'\n+'

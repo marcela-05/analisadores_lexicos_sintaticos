@@ -1,8 +1,8 @@
 from typing import List, Optional, Union
 
-# SLY Parser decorator function
+# Função decoradora do Parser SLY
 def _(rule):
-    """Decorator for SLY parser rules"""
+    """Decorador para regras do parser SLY"""
     def decorator(func):
         func._grammar = (rule,) if isinstance(rule, str) else rule
         return func
@@ -10,7 +10,7 @@ def _(rule):
 
 
 class ASTNode:
-    """Base class for all AST nodes"""
+    """Classe base para todos os nós da AST"""
 
     def __init__(self, line_number: int = 0):
         self.line_number = line_number
@@ -19,12 +19,12 @@ class ASTNode:
         return f"{self.__class__.__name__}"
 
     def pretty_print(self, indent: int = 0) -> str:
-        """Pretty print the AST with indentation"""
+        """Imprime a AST de forma organizada com indentação"""
         return "  " * indent + str(self)
 
 
 class Program(ASTNode):
-    """Root node representing the entire program"""
+    """Nó raiz representando o programa inteiro"""
 
     def __init__(self, devices: List['Device'], commands: List['Command'], line_number: int = 0):
         super().__init__(line_number)
@@ -46,7 +46,7 @@ class Program(ASTNode):
 
 
 class Device(ASTNode):
-    """Node representing a device declaration"""
+    """Nó representando uma declaração de dispositivo"""
 
     def __init__(self, name: str, observation: Optional[str] = None, line_number: int = 0):
         super().__init__(line_number)
@@ -66,12 +66,12 @@ class Device(ASTNode):
 
 
 class Command(ASTNode):
-    """Base class for commands"""
+    """Classe base para comandos"""
     pass
 
 
 class Attribution(Command):
-    """Node representing attribution"""
+    """Nó representando atribuição"""
 
     def __init__(self, observation: str, value: Union[int, bool], line_number: int = 0):
         super().__init__(line_number)
@@ -86,7 +86,7 @@ class Attribution(Command):
 
 
 class ObservationAction(Command):
-    """Node representing conditional"""
+    """Nó representando condicional"""
 
     def __init__(self, condition: 'Observation', then_action: 'Action',
                  else_action: Optional['Action'] = None, line_number: int = 0):
@@ -109,7 +109,7 @@ class ObservationAction(Command):
 
 
 class Observation(ASTNode):
-    """Node representing observation"""
+    """Nó representando observação"""
 
     def __init__(self, observation: str, operator: str, value: Union[int, bool],
                  next_obs: Optional['Observation'] = None, logical_op: str = "&&", line_number: int = 0):
@@ -118,7 +118,7 @@ class Observation(ASTNode):
         self.operator = operator
         self.value = value
         self.next_obs = next_obs
-        self.logical_op = logical_op  # "&&" (AND) or "||" (OR)
+        self.logical_op = logical_op  # "&&" (AND) ou "||" (OR)
 
     def __str__(self) -> str:
         result = f"{self.observation} {self.operator} {self.value}"
@@ -128,12 +128,12 @@ class Observation(ASTNode):
 
 
 class Action(ASTNode):
-    """Base class for actions"""
+    """Classe base para ações"""
     pass
 
 
 class SimpleAction(Action):
-    """Node representing simple action"""
+    """Nó representando ação simples"""
 
     def __init__(self, action_type: str, device: str, line_number: int = 0):
         super().__init__(line_number)
@@ -145,7 +145,7 @@ class SimpleAction(Action):
 
 
 class AlertAction(Action):
-    """Node representing alert action"""
+    """Nó representando ação de alerta"""
 
     def __init__(self, message: str, device: str, observation: Optional[str] = None, line_number: int = 0):
         super().__init__(line_number)
@@ -160,7 +160,7 @@ class AlertAction(Action):
 
 
 class BroadcastAlertAction(Action):
-    """Node representing broadcast alert"""
+    """Nó representando alerta broadcast"""
 
     def __init__(self, message: str, devices: List[str], line_number: int = 0):
         super().__init__(line_number)

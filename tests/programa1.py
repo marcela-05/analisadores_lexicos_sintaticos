@@ -1,15 +1,15 @@
-# Generated Python code from ObsAct program
-# Generated using SLY-based parser and code generator
+# Código Python gerado a partir do programa ObsAct
+# Gerado usando parser baseado em SLY e gerador de código
 
-# Import device control functions
+# Importa funções de controle de dispositivos
 from functions import ligar, desligar, alerta, alertavar
 
-# Main program logic
+# Lógica principal do programa
 def main():
-    # Variable for device Termometro observation
-    temperatura = None  # Will be set by program
-    # Variable for device ventilador observation
-    potencia = None  # Will be set by program
+    # Variável para observação do dispositivo Termometro
+    temperatura = None  # Será definida pelo programa
+    # Variável para observação do dispositivo ventilador
+    potencia = None  # Será definida pelo programa
 
     # set temperatura = 40
     temperatura = 40

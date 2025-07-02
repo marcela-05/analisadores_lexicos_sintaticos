@@ -3,45 +3,45 @@ from ast_nodes import *
 from lexer import DeviceLexer
 from parser import DeviceParser
 
-# Code Generator
+# Gerador de Código
 class CodeGenerator:
-    """Generates Python code from ObsAct AST"""
+    """Gera código Python a partir da AST do ObsAct"""
 
     def __init__(self):
-        self.output_lines = []
-        self.indent_level = 0
-        self.devices = set()  
-        self.variables = set()  
-
-    def generate(self, ast: Program) -> str:
-        """Generate Python code from AST"""
         self.output_lines = []
         self.indent_level = 0
         self.devices = set()
         self.variables = set()
 
-        self.add_line("# Generated Python code from ObsAct program")
-        self.add_line("# Generated using SLY-based parser and code generator")
+    def generate(self, ast: Program) -> str:
+        """Gera código Python a partir da AST"""
+        self.output_lines = []
+        self.indent_level = 0
+        self.devices = set()
+        self.variables = set()
+
+        self.add_line("# Código Python gerado a partir do programa ObsAct")
+        self.add_line("# Gerado usando parser baseado em SLY e gerador de código")
         self.add_line("")
-        self.add_line("# Import device control functions")
+        self.add_line("# Importa funções de controle de dispositivos")
         self.add_line("from functions import ligar, desligar, alerta, alertavar")
         self.add_line("")
 
-        # Collect device information
+        # Coleta informações dos dispositivos
         for device in ast.devices:
             self.devices.add(device.name)
             if device.observation:
                 self.variables.add(device.observation)
 
-        # Generate main program logic
-        self.add_line("# Main program logic")
+        # Gera lógica principal do programa
+        self.add_line("# Lógica principal do programa")
         self.add_line("def main():")
         self.indent_level += 1
 
-        # Initialize variables from device observations
+        # Inicializa variáveis das observações dos dispositivos
         self.generate_variable_initializations(ast.devices)
 
-        # Generate commands
+        # Gera comandos
         for command in ast.commands:
             self.generate_command(command)
 
@@ -53,7 +53,7 @@ class CodeGenerator:
         return "\n".join(self.output_lines)
 
     def add_line(self, line: str = ""):
-        """Add a line with proper indentation"""
+        """Adiciona uma linha com indentação adequada"""
         if line.strip():
             self.output_lines.append("    " * self.indent_level + line)
         else:
@@ -62,18 +62,18 @@ class CodeGenerator:
 
 
     def generate_variable_initializations(self, devices: List[Device]):
-        """Generate variable initializations for device observations"""
+        """Gera inicializações de variáveis para observações de dispositivos"""
         for device in devices:
             if device.observation:
                 self.variables.add(device.observation)
-                self.add_line(f"# Variable for device {device.name} observation")
-                self.add_line(f"{device.observation} = None  # Will be set by program")
+                self.add_line(f"# Variável para observação do dispositivo {device.name}")
+                self.add_line(f"{device.observation} = None  # Será definida pelo programa")
 
         if any(device.observation for device in devices):
             self.add_line("")
 
     def generate_command(self, command: Command):
-        """Generate code for a command"""
+        """Gera código para um comando"""
         if isinstance(command, Attribution):
             self.generate_attribution(command)
         elif isinstance(command, ObservationAction):
@@ -85,18 +85,18 @@ class CodeGenerator:
         elif isinstance(command, BroadcastAlertAction):
             self.generate_broadcast_alert_action(command)
         else:
-            self.add_line(f"# Unknown command type: {type(command)}")
+            self.add_line(f"# Tipo de comando desconhecido: {type(command)}")
 
     def generate_attribution(self, attr: Attribution):
-        """Generate code for attribution (set command)"""
+        """Gera código para atribuição (comando set)"""
         original_comment = f"# set {attr.observation} = {attr.value}"
         self.add_line(original_comment)
         self.add_line(f"{attr.observation} = {repr(attr.value)}")
         self.add_line("")
 
     def generate_observation_action(self, obs_act: ObservationAction):
-        """Generate code for conditional statements"""
-        # Generate condition
+        """Gera código para declarações condicionais"""
+        # Gera condição
         condition_str = self.generate_observation_condition(obs_act.condition)
         original_comment = f"# se {condition_str} entao ..."
 
@@ -104,12 +104,12 @@ class CodeGenerator:
         self.add_line(f"if {condition_str}:")
         self.indent_level += 1
 
-        # Generate then action
+        # Gera ação then
         self.generate_action(obs_act.then_action)
 
         self.indent_level -= 1
 
-        # Generate else action if present
+        # Gera ação else se presente
         if obs_act.else_action:
             self.add_line("else:")
             self.indent_level += 1
@@ -119,19 +119,19 @@ class CodeGenerator:
         self.add_line("")
 
     def generate_observation_condition(self, obs: Observation) -> str:
-        """Generate Python condition from observation"""
+        """Gera condição Python a partir da observação"""
         condition = f"{obs.observation} {obs.operator} {repr(obs.value)}"
 
         if obs.next_obs:
             next_condition = self.generate_observation_condition(obs.next_obs)
-            # Convert logical operator to Python equivalent
+            # Converte operador lógico para equivalente Python
             python_op = "or" if obs.logical_op == "||" else "and"
             condition += f" {python_op} {next_condition}"
 
         return condition
 
     def generate_action(self, action: Action):
-        """Generate code for an action"""
+        """Gera código para uma ação"""
         if isinstance(action, SimpleAction):
             self.generate_simple_action(action)
         elif isinstance(action, AlertAction):
@@ -139,16 +139,16 @@ class CodeGenerator:
         elif isinstance(action, BroadcastAlertAction):
             self.generate_broadcast_alert_action(action)
         else:
-            self.add_line(f"# Unknown action type: {type(action)}")
+            self.add_line(f"# Tipo de ação desconhecido: {type(action)}")
 
     def generate_simple_action(self, action: SimpleAction):
-        """Generate code for simple actions (ligar/desligar)"""
+        """Gera código para ações simples (ligar/desligar)"""
         original_comment = f"# {action.action_type} {action.device}"
         self.add_line(original_comment)
         self.add_line(f'{action.action_type}("{action.device}")')
 
     def generate_alert_action(self, action: AlertAction):
-        """Generate code for alert actions"""
+        """Gera código para ações de alerta"""
         if action.observation:
             original_comment = f'# enviar alerta ("{action.message}", {action.observation}) {action.device}'
             self.add_line(original_comment)
@@ -159,79 +159,79 @@ class CodeGenerator:
             self.add_line(f'alerta("{action.device}", "{action.message}")')
 
     def generate_broadcast_alert_action(self, action: BroadcastAlertAction):
-        """Generate code for broadcast alert actions"""
+        """Gera código para ações de alerta broadcast"""
         original_comment = f'# enviar alerta ("{action.message}") para todos : {", ".join(action.devices)}'
         self.add_line(original_comment)
-        self.add_line("# Broadcast alert to multiple devices")
+        self.add_line("# Alerta broadcast para múltiplos dispositivos")
         for device in action.devices:
             self.add_line(f'alerta("{device}", "{action.message}")')
 
 
 class ObsActCompiler:
-    """Main compiler class that handles .obs to .py conversion"""
+    """Classe principal do compilador que gerencia conversão de .obs para .py"""
 
     def __init__(self):
         self.processor = DeviceLanguageProcessor()
         self.code_generator = CodeGenerator()
 
     def compile_file(self, obs_file_path: str, py_file_path: str = None) -> bool:
-        """Compile .obs file to .py file"""
+        """Compila arquivo .obs para arquivo .py"""
         try:
-            # Determine output file path
+            # Determina caminho do arquivo de saída
             if py_file_path is None:
                 if obs_file_path.endswith('.obs'):
                     py_file_path = obs_file_path[:-4] + '.py'
                 else:
                     py_file_path = obs_file_path + '.py'
 
-            # Read input file
+            # Lê arquivo de entrada
             with open(obs_file_path, 'r', encoding='utf-8') as f:
                 obs_code = f.read()
 
-            print(f"Reading ObsAct program from: {obs_file_path}")
+            print(f"Lendo programa ObsAct de: {obs_file_path}")
 
-            # Parse the ObsAct code
+            # Analisa o código ObsAct
             result = self.processor.analyze(obs_code, show_tokens=False, show_ast=False)
 
             if not result['success']:
-                print("Compilation failed due to syntax errors:")
+                print("Compilação falhou devido a erros de sintaxe:")
                 for error in result['errors']:
                     print(f"  {error}")
                 return False
 
-            # Generate Python code
+            # Gera código Python
             python_code = self.code_generator.generate(result['ast'])
 
-            # Write output file
+            # Escreve arquivo de saída
             with open(py_file_path, 'w', encoding='utf-8') as f:
                 f.write(python_code)
 
-            print(f"Successfully generated Python code: {py_file_path}")
+            print(f"Código Python gerado com sucesso: {py_file_path}")
             return True
 
         except FileNotFoundError:
-            print(f"Error: File '{obs_file_path}' not found")
+            print(f"Erro: Arquivo '{obs_file_path}' não encontrado")
             return False
         except Exception as e:
-            print(f"Error during compilation: {str(e)}")
+            print(f"Erro durante compilação: {str(e)}")
             return False
 
     def compile_string(self, obs_code: str) -> str:
-        """Compile ObsAct code string to Python code string"""
+        """Compila string de código ObsAct para string de código Python"""
         result = self.processor.analyze(obs_code, show_tokens=False, show_ast=False)
 
         if not result['success']:
-            raise Exception(f"Compilation failed: {result['errors']}")
+            raise Exception(f"Compilação falhou: {result['errors']}")
 
         return self.code_generator.generate(result['ast'])
 
 
 # ============================================================================
-# Unified Interface for SLY Parser
+# Interface Unificada para Parser SLY
 # ============================================================================
 
 class DeviceLanguageProcessor:
-    """Unified interface for lexical analysis and parsing using SLY"""
+    """Interface unificada para análise léxica e sintática usando SLY"""
 
     def __init__(self, debug_mode: bool = False):
         self.lexer = DeviceLexer()
@@ -239,30 +239,30 @@ class DeviceLanguageProcessor:
         self.debug_mode = debug_mode
 
     def tokenize(self, input_text: str) -> list:
-        """Tokenize input text and return list of tokens"""
+        """Tokeniza texto de entrada e retorna lista de tokens"""
         return list(self.lexer.tokenize(input_text))
 
     def parse(self, input_text: str) -> Program:
-        """Parse input text and return AST"""
+        """Analisa texto de entrada e retorna AST"""
         try:
-            # Reset parser error state
+            # Reseta estado de erro do parser
             self.parser.error_occurred = False
             self.parser.error_message = ""
 
             tokens = self.lexer.tokenize(input_text)
             result = self.parser.parse(tokens)
 
-            # Check if parsing failed
+            # Verifica se a análise falhou
             if result is None or self.parser.error_occurred:
-                error_msg = self.parser.error_message if self.parser.error_message else "Parsing failed: No valid parse tree generated"
+                error_msg = self.parser.error_message if self.parser.error_message else "Análise falhou: Nenhuma árvore de análise válida gerada"
                 raise Exception(error_msg)
 
             return result
         except Exception as e:
-            raise Exception(f"Parsing failed: {str(e)}")
+            raise Exception(f"Análise falhou: {str(e)}")
 
     def analyze(self, input_text: str, show_tokens: bool = False, show_ast: bool = True) -> dict:
-        """Complete analysis: tokenization and parsing"""
+        """Análise completa: tokenização e análise sintática"""
         result = {
             'success': False,
             'tokens': [],
@@ -271,7 +271,7 @@ class DeviceLanguageProcessor:
         }
 
         try:
-            # Tokenization
+            # Tokenização
             result['tokens'] = self.tokenize(input_text)
 
             if show_tokens:
@@ -280,7 +280,7 @@ class DeviceLanguageProcessor:
                     print(f"{token.type:12} | {repr(token.value):20} | Linha: {token.lineno}")
                 print()
 
-            # Parsing
+            # Análise sintática
             result['ast'] = self.parse(input_text)
             result['success'] = True
 
@@ -292,36 +292,36 @@ class DeviceLanguageProcessor:
         except Exception as e:
             result['errors'].append(str(e))
             if show_ast:
-                print(f"=== PARSE ERROR ===")
+                print(f"=== ERRO DE ANÁLISE ===")
                 print(str(e))
                 print()
 
         return result
 
 def main():
-    """Main function with command line interface"""
+    """Função principal com interface de linha de comando"""
     import sys
     import os
 
     if len(sys.argv) > 1:
-        # Command line mode - compile .obs file
+        # Modo linha de comando - compila arquivo .obs
         obs_file = sys.argv[1]
 
         if not os.path.exists(obs_file):
-            print(f"Error: File '{obs_file}' not found")
+            print(f"Erro: Arquivo '{obs_file}' não encontrado")
             sys.exit(1)
 
-        # Optional output file
+        # Arquivo de saída opcional
         py_file = sys.argv[2] if len(sys.argv) > 2 else None
 
         compiler = ObsActCompiler()
         success = compiler.compile_file(obs_file, py_file)
 
         if success:
-            print("Compilation completed successfully!")
+            print("Compilação concluída com sucesso!")
             sys.exit(0)
         else:
-            print("Compilation failed!")
+            print("Compilação falhou!")
             sys.exit(1)
 
 

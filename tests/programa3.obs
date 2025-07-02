@@ -3,5 +3,7 @@ dispositivo : { higrmetro , umidade }
 dispositivo : { lampada , potencia }
 dispositivo : { Monitor }
 set potencia = 100 .
-se umidade < 40 entao enviar alerta (" Ar seco detectado ") Monitor .
-se movimento == true entao ligar lampada senao desligar lampada .
+se umidade < 40 entao enviar alerta " Ar seco detectado "
+Monitor .
+se movimento == True entao ligar lampada senao desligar
+lampada .

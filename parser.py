@@ -3,9 +3,9 @@ from typing import List, Optional, Union
 from lexer import DeviceLexer
 from ast_nodes import Program, Device, Command, Attribution, ObservationAction, SimpleAction, AlertAction, BroadcastAlertAction, Observation
 
-# SLY Parser decorator function
+# Função decoradora do Parser SLY
 def _(rule):
-    """Decorator for SLY parser rules"""
+    """Decorador para regras do parser SLY"""
     def decorator(func):
         func._grammar = (rule,) if isinstance(rule, str) else rule
         return func
@@ -13,7 +13,7 @@ def _(rule):
 
 
 class DeviceParser(Parser):
-    """SLY-based parser for the device grammar"""
+    """Parser baseado em SLY para a gramática de dispositivos"""
 
     debugfile = "parser.out"
     tokens = DeviceLexer.tokens
