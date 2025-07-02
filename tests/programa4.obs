@@ -1,0 +1,4 @@
+dispositivo : { umidade }
+dispositivo : { Monitor }
+se umidade < 40 entao enviar alerta (" Ar seco detectado ")
+Monitor .
