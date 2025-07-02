@@ -1,0 +1,22 @@
+dispositivo : {sensor1}  // dispositivo com comentário
+dispositivo : {sensor2, temp}  // com observação e comentário
+
+// comentário antes do comando set
+set temp = 25.  // comentário depois do set
+
+// comentário com aspas: "isso tá entre aspas"
+// caracteres especiais: !@#$%^&*()_+-=[]{}|;:'"<>?,.
+// só números: 123456789
+// misturado: temp_01 = 25°C (faixa normal)
+
+// comentário vazio:
+//
+
+se temp > 20 entao ligar sensor1.  // condicional com comentário
+
+// vários // no comentário: // // // //
+// palavras reservadas no comentário: dispositivo set se entao senao ligar desligar
+
+enviar alerta ("Teste") sensor1.  // alerta com comentário
+
+// comentário no final do arquivo

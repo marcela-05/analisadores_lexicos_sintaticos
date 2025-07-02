@@ -1,0 +1,15 @@
+dispositivo : {tempSensor, temperatura}
+dispositivo : {heater}
+dispositivo : {airConditioner}
+dispositivo : {dehumidifier, umidade}
+dispositivo : {smartLights, movimento}
+dispositivo : {painel}
+
+set temperatura = 28.
+set umidade = 75.
+set movimento = false.
+
+se temperatura > 30 || umidade > 70 entao ligar airConditioner.
+se temperatura < 18 ||  umidade < 35 entao ligar heater.
+se movimento == true entao ligar smartLights.
+enviar alerta ("Sistema ativado", temperatura) painel.

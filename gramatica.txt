@@ -23,6 +23,7 @@ OBSACT → se OBS entao ACT
 
 OBS → observation oplogic VAR
      | observation oplogic VAR && OBS
+     | observation oplogic VAR || OBS
 
 VAR → num
      | bool
@@ -34,3 +35,6 @@ ACT → ACTION namedevice
 
 ACTION → ligar
         | desligar
+
+LOGICAL_OP → &&
+           | ||

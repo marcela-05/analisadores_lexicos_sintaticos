@@ -112,17 +112,18 @@ class Observation(ASTNode):
     """Node representing observation"""
 
     def __init__(self, observation: str, operator: str, value: Union[int, bool],
-                 next_obs: Optional['Observation'] = None, line_number: int = 0):
+                 next_obs: Optional['Observation'] = None, logical_op: str = "&&", line_number: int = 0):
         super().__init__(line_number)
         self.observation = observation
         self.operator = operator
         self.value = value
         self.next_obs = next_obs
+        self.logical_op = logical_op  # "&&" (AND) or "||" (OR)
 
     def __str__(self) -> str:
         result = f"{self.observation} {self.operator} {self.value}"
         if self.next_obs:
-            result += f" && {self.next_obs}"
+            result += f" {self.logical_op} {self.next_obs}"
         return result
 
 

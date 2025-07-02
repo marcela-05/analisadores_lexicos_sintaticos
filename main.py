@@ -124,7 +124,9 @@ class CodeGenerator:
 
         if obs.next_obs:
             next_condition = self.generate_observation_condition(obs.next_obs)
-            condition += f" and {next_condition}"
+            # Convert logical operator to Python equivalent
+            python_op = "or" if obs.logical_op == "||" else "and"
+            condition += f" {python_op} {next_condition}"
 
         return condition
 

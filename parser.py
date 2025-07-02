@@ -60,6 +60,11 @@ class DeviceParser(Parser):
     def device(self, p):
         return Device(p.device_name, line_number=p.lineno)
 
+    # dispositivo : nome, observacao (old syntax without braces)
+    @_('DISPOSITIVO DOIS_PONTOS device_name VIRGULA OBSERVATION')
+    def device(self, p):
+        return Device(p.device_name, p.OBSERVATION, line_number=p.lineno)
+
     # Helper rule for device names (can be NAMEDEVICE or OBSERVATION)
     @_('NAMEDEVICE')
     def device_name(self, p):
@@ -121,7 +126,11 @@ class DeviceParser(Parser):
 
     @_('OBSERVATION OPLOGIC variable AND observation')
     def observation(self, p):
-        return Observation(p.OBSERVATION, p.OPLOGIC, p.variable, p.observation, line_number=p.lineno)
+        return Observation(p.OBSERVATION, p.OPLOGIC, p.variable, p.observation, "&&", line_number=p.lineno)
+
+    @_('OBSERVATION OPLOGIC variable OR observation')
+    def observation(self, p):
+        return Observation(p.OBSERVATION, p.OPLOGIC, p.variable, p.observation, "||", line_number=p.lineno)
 
     # ACT → ACTION namedevice | enviar alerta (msg) namedevice | enviar alerta (msg, observation) namedevice | enviar alerta (msg) para todos : DEVICE_LIST
     # Note: Order matters in SLY - more specific rules should come first

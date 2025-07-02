@@ -6,7 +6,7 @@ class DeviceLexer(Lexer):
     tokens = {
         'DISPOSITIVO', 'SET', 'SE', 'ENTAO', 'SENAO', 'ENVIAR', 'ALERTA',
         'PARA', 'TODOS', 'LIGAR', 'DESLIGAR',
-        'OPLOGIC', 'AND',
+        'OPLOGIC', 'AND', 'OR',
         'DOIS_PONTOS', 'PONTO', 'VIRGULA', 'IGUAL',
         'ABRE_CHAVE', 'FECHA_CHAVE', 'ABRE_PAREN', 'FECHA_PAREN',
         'NAMEDEVICE', 'OBSERVATION', 'NUM', 'BOOL', 'MSG'
@@ -26,6 +26,7 @@ class DeviceLexer(Lexer):
     DESLIGAR    = r'desligar\b'
 
     # Operadores
+    OR      = r'\|\|'
     AND     = r'&&'
     OPLOGIC = r'(==|!=|<=|>=|<|>)'
 
@@ -81,6 +82,9 @@ class DeviceLexer(Lexer):
         if t.value in keywords:
             t.type = t.value.upper()
         return t
+
+    # Comments - ignore everything from // to end of line
+    ignore_comment = r'//.*'
 
     ignore_newline = r'\n+'
 
