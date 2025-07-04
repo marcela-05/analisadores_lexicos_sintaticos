@@ -6,6 +6,9 @@ from functions import ligar, desligar, alerta, alertavar
 
 # Lógica principal do programa
 def main():
+    # set umidade = 20
+    umidade = 20
+
     # se umidade < 40 entao ...
     if umidade < 40:
         # enviar alerta (" Ar seco detectado ") Monitor
